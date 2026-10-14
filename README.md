@@ -79,7 +79,7 @@ These sequences match the N-X-S/T pattern. Their presence does not confirm that 
 
 ### Figure 2. Potential N-Glycosylation Motif Positions
 
-![CTSF Potential N-Glycosylation Motifs](figures/CTSF_potential_N_glycosylation.png)
+![CTSF Potential N-Glycosylation Motifs](CTSF_potential_N_glycosylation.png)
 
 ## 5. Discussion: Five Laboratory Questions
 
