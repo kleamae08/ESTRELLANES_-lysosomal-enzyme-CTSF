@@ -30,10 +30,6 @@ The protein sequence was retrieved from NCBI. An R script was used to calculate 
 
 **NCBI Protein Record:** [Cathepsin F precursor — NP_003784.2](https://www.ncbi.nlm.nih.gov/protein/NP_003784.2)
 
-**FASTA Sequence:** [CTSF.fasta](data/CTSF.fasta)
-
-**NCBI Protein Record:** [Cathepsin F precursor — NP_003784.2](https://www.ncbi.nlm.nih.gov/protein/NP_003784.2)
-
 ## 3. Methods
 
 1. Selected the human CTSF protein record from NCBI.
