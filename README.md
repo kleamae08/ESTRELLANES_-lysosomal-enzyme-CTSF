@@ -61,7 +61,7 @@ Leucine was the most abundant amino acid in the analyzed sequence.
 
 ### Figure 1. Amino Acid Composition
 
-![CTSF Amino Acid Composition](figures/CTSF_amino_acid_composition.png)
+![CTSF Amino Acid Composition](CTSF_amino_acid_composition.png)
 
 ### 4.3 Potential N-Glycosylation Motifs
 
