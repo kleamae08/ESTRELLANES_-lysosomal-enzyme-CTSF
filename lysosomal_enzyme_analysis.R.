@@ -1,0 +1,172 @@
+install.packages(c("rentrez", "ggplot2"))
+
+
+# Cell & Molecular Biology Laboratory
+# Exploring Lysosomal Enzymes Using NCBI and R
+# Student: Klea Mae G. Estrellanes
+# Gene: CTSF
+# Protein: Cathepsin F precursor
+# Organism: Homo sapiens
+
+# Install packages once if needed:
+# install.packages(c("rentrez", "ggplot2"))
+
+library(rentrez)
+library(ggplot2)
+
+# 1. Gene and accession
+gene <- "CTSF"
+accession <- "NP_003784.2"
+
+# 2. Create output folders
+dir.create("data", showWarnings = FALSE)
+dir.create("results", showWarnings = FALSE)
+dir.create("figures", showWarnings = FALSE)
+
+# 3. Download the protein sequence from NCBI
+fasta <- entrez_fetch(
+  db = "protein",
+  id = accession,
+  rettype = "fasta",
+  retmode = "text"
+)
+
+writeLines(fasta, paste0("data/", gene, ".fasta"))
+
+# Extract the amino acid sequence
+lines <- strsplit(fasta, "\n", fixed = TRUE)[[1]]
+sequence <- paste(lines[!grepl("^>", lines)], collapse = "")
+sequence <- toupper(gsub("[[:space:]]", "", sequence))
+
+if (nchar(sequence) == 0) {
+  stop("No protein sequence was downloaded. Check the accession.")
+}
+
+# 4. Check protein length
+protein_length <- nchar(sequence)
+cat("Gene:", gene, "\n")
+cat("Accession:", accession, "\n")
+cat("Protein length:", protein_length, "amino acids\n")
+
+# 5. Calculate amino acid counts and percentages
+amino_acids <- strsplit(sequence, "")[[1]]
+aa_table <- as.data.frame(table(amino_acids))
+names(aa_table) <- c("AminoAcid", "Count")
+
+aa_table$Count <- as.integer(aa_table$Count)
+aa_table$Percentage <- aa_table$Count / protein_length * 100
+aa_table <- aa_table[order(-aa_table$Count), ]
+
+write.csv(
+  aa_table,
+  paste0("results/", gene, "_amino_acid_counts.csv"),
+  row.names = FALSE
+)
+
+# Figure 1: Amino acid composition
+p1 <- ggplot(
+  aa_table,
+  aes(x = reorder(AminoAcid, -Count), y = Count)
+) +
+  geom_col() +
+  labs(
+    title = paste(gene, "Amino Acid Composition"),
+    x = "Amino acid",
+    y = "Count"
+  ) +
+  theme_minimal()
+
+ggsave(
+  paste0("figures/", gene, "_amino_acid_composition.png"),
+  plot = p1, width = 9, height = 5, dpi = 300
+)
+
+# 6. Find potential N-glycosylation motifs: N-X-S/T
+# X can be any amino acid except proline (P).
+motifs <- data.frame(
+  Position = integer(),
+  Motif = character()
+)
+
+if (protein_length >= 3) {
+  for (i in seq_len(protein_length - 2)) {
+    triplet <- substr(sequence, i, i + 2)
+    chars <- strsplit(triplet, "")[[1]]
+    
+    if (
+      chars[1] == "N" &&
+      chars[2] != "P" &&
+      chars[3] %in% c("S", "T")
+    ) {
+      motifs <- rbind(
+        motifs,
+        data.frame(Position = i, Motif = triplet)
+      )
+    }
+  }
+}
+
+write.csv(
+  motifs,
+  paste0("results/", gene, "_motif_positions.csv"),
+  row.names = FALSE
+)
+
+# Figure 2: Potential motif positions
+if (nrow(motifs) > 0) {
+  p2 <- ggplot(motifs, aes(x = Position, y = 1)) +
+    geom_point(size = 3) +
+    scale_x_continuous(
+      limits = c(1, protein_length)
+    ) +
+    labs(
+      title = paste(gene, "Potential N-glycosylation Motifs"),
+      x = "Amino acid position",
+      y = "Motif found"
+    ) +
+    theme_minimal() +
+    theme(axis.text.y = element_blank(),
+          axis.ticks.y = element_blank())
+  
+} else {
+  p2 <- ggplot(
+    data.frame(Position = 1, Value = 0),
+    aes(x = Position, y = Value)
+  ) +
+    geom_blank() +
+    scale_x_continuous(limits = c(1, protein_length)) +
+    labs(
+      title = paste(gene, "Potential N-glycosylation Motifs"),
+      subtitle = "No N-X-S/T motifs detected",
+      x = "Amino acid position",
+      y = NULL
+    ) +
+    theme_minimal() +
+    theme(axis.text.y = element_blank(),
+          axis.ticks.y = element_blank())
+}
+
+ggsave(
+  paste0("figures/", gene, "_potential_N_glycosylation.png"),
+  plot = p2, width = 9, height = 4, dpi = 300
+)
+
+# 7. Save summary
+summary_table <- data.frame(
+  Gene = gene,
+  Protein = "Cathepsin F precursor",
+  Organism = "Homo sapiens",
+  Accession = accession,
+  Protein_Length = protein_length,
+  Potential_N_Glycosylation_Motifs = nrow(motifs)
+)
+
+write.csv(
+  summary_table,
+  paste0("results/", gene, "_summary.csv"),
+  row.names = FALSE
+)
+
+cat("\nPotential N-glycosylation motifs:", nrow(motifs), "\n")
+cat("\nAnalysis complete! Check your data, results, and figures folders.\n")
+
